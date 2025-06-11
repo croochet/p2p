@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXPLORAR_REDE_P2P.SYS</title>
+    <title>REDE_P2P.EXPLORAR</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -42,7 +42,7 @@
         body {
             margin: 0;
             overflow: hidden; /* Prevents scrollbars */
-            background-color: #FEFEFA; /* Pure black background for contrast */
+            background-color: var(--tw-colors-black-pure); /* Pure black background for contrast */
             color: var(--tw-colors-white-pure); /* Pure white text */
             font-family: 'Inter', sans-serif; /* Sans-serif font for body */
             display: flex;
@@ -75,7 +75,7 @@
             position: relative;
             width: 100%;
             max-width: 960px; /* max-w-4xl */
-            height: 70vh;
+            height: 100vh; /* Changed to take full height */
             background-color: var(--tw-colors-gray-darkest); /* Darker background for the graph */
             border: 2px solid var(--tw-colors-white-pure); /* High-contrast white border */
             border-radius: 0; /* No rounded corners */
@@ -113,26 +113,8 @@
             font-family: 'SF Mono', monospace; /* Monospaced font for labels */
         }
 
-        /* Styles for the legend */
-        .legend {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.7rem;
-            fill: var(--tw-colors-white-pure); /* White legend text for dark background */
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .legend-shape {
-            stroke: var(--tw-colors-white-pure); /* White legend shape border */
-            stroke-width: 1px;
-        }
-        .legend-text {
-            fill: var(--tw-colors-white-pure); /* White legend text */
-            margin-left: 5px;
-        }
-
+        /* Button styles (removed as per request) */
+        /* Footer styles (removed as per request) */
 
         /* Modal styles - Revised for new aesthetic */
         .modal-overlay {
@@ -234,7 +216,6 @@
     </style>
 </head>
 <body>
-
 
     <div id="graph-wrapper" class="relative">
         <!-- D3.js SVG will be injected here -->
@@ -401,7 +382,8 @@
             const simulation = d3.forceSimulation(graphData.nodes)
                 .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100)) // Link force with 100px distance
                 .force("charge", d3.forceManyBody().strength(-300)) // Repulsion force between nodes
-                .force("center", d3.forceCenter(width / 2, height / 2)); // Force to center the graph
+                .force("center", d3.forceCenter(width / 2, height / 2)) // Force to center the graph
+                .alphaDecay(0.01); // Smaller decay for smoother movement
 
             // Add links (edges) to SVG
             const link = g.append("g")
@@ -496,8 +478,6 @@
                 const prompt = `In a peer-to-peer (P2P) network context, what is "${d.label}"? Provide a brief, concise explanation, using technical and direct language, as if it were part of a system documentation.`;
                 generateLLMResponse(prompt, `INFO_ABOUT: ${d.label.toUpperCase()}`, 'node-info');
             });
-
-            
         }
 
         // Initialize graph drawing and listeners when DOM is fully loaded.
@@ -505,10 +485,6 @@
             drawGraph();
             // Redraw graph on window resize
             window.addEventListener('resize', drawGraph);
-
-            // The 'explore-concept-button' and related footer are now removed,
-            // so this event listener and console error check are no longer needed.
-            // Keeping them commented out or removed ensures clean code.
         });
     </script>
 </body>
