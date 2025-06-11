@@ -42,7 +42,7 @@
         body {
             margin: 0;
             overflow: hidden; /* Prevents scrollbars */
-            background-color: #FEFEFA; /* Pure black background for contrast */
+            background-color: var(--tw-colors-black-pure); /* Pure black background for contrast */
             color: var(--tw-colors-white-pure); /* Pure white text */
             font-family: 'Inter', sans-serif; /* Sans-serif font for body */
             display: flex;
@@ -76,7 +76,7 @@
 
         /* Style for links (edges) */
         .link {
-            stroke: #D3D3D3; /* Connection color: #959595 */
+            stroke: #D3D3D3; /* Connection color: #959595 (explicit hex value) */
             stroke-width: 1px;
             pointer-events: none;
         }
@@ -111,7 +111,7 @@
         }
 
         .modal-content {
-            background-color: var(--tw-colors-gray-darkest); /* Darker modal background */
+            background-color: #FEFEFA; /* Darker modal background */
             padding: 1.5rem; /* 24px */
             border-radius: 0; /* No rounded corners */
             box-shadow: none; /* No shadow */
@@ -461,7 +461,11 @@
             const zoom = d3.zoom()
                 .scaleExtent([0.1, 8]) // Zoom limits
                 .on("zoom", (event) => {
-                    g.attr("transform", event.transform);
+                    // Apply a short transition for smoother visual zoom
+                    g.transition()
+                        .duration(50) // Duration in milliseconds
+                        .ease(d3.easeLinear) // Linear easing for consistent speed
+                        .attr("transform", event.transform);
                 });
 
             svg.call(zoom);
