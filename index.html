@@ -47,35 +47,18 @@
             font-family: 'Inter', sans-serif; /* Sans-serif font for body */
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            /* Removed align-items and justify-content to allow full canvas spread */
             min-height: 100vh;
-            padding: 1rem;
-        }
-
-        /* Main title with monospaced font and high contrast */
-        h1 {
-            font-family: 'SF Mono', monospace;
-            font-size: 2.5rem; /* text-4xl */
-            line-height: 1;
-            margin-bottom: 2rem; /* mb-8 */
-            text-align: center;
-            color: var(--tw-colors-white-pure); /* White color for dark background */
-            text-transform: uppercase; /* For a more technical look */
-            letter-spacing: 0.1em; /* Letter spacing */
-        }
-        @media (min-width: 768px) {
-            h1 {
-                font-size: 3rem; /* md:text-5xl */
-            }
+            width: 100vw; /* Ensure full viewport width */
+            padding: 0; /* Remove padding for true full screen */
         }
 
         /* Graph container with solid border and dark background */
         #graph-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 960px; /* max-w-4xl */
-            height: 100vh; /* Changed to take full height */
+            width: 100vw; /* Takes full viewport width */
+            max-width: none; /* Removed max-width for infinite feel */
+            height: 100vh; /* Takes full viewport height */
             background-color: var(--tw-colors-gray-darkest); /* Darker background for the graph */
             border: 2px solid var(--tw-colors-white-pure); /* High-contrast white border */
             border-radius: 0; /* No rounded corners */
@@ -112,9 +95,6 @@
             user-select: none;
             font-family: 'SF Mono', monospace; /* Monospaced font for labels */
         }
-
-        /* Button styles (removed as per request) */
-        /* Footer styles (removed as per request) */
 
         /* Modal styles - Revised for new aesthetic */
         .modal-overlay {
@@ -252,25 +232,40 @@
         const graphData = {
             nodes: [
                 // Original nodes
-                { id: 'centralized', label: '#decentralized', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic: #9CA3AF
-                { id: 'peer_atlas', label: 'peer_atlas', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
-                { id: 'archive_2024.tar', label: 'archive_2024.tar', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
-                { id: 'node_seeker', label: 'node_seeker', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
-                { id: 'network_map.json', label: 'network_map.json', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
-                { id: 'mesh_walker', label: 'mesh_walker', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
-                { id: 'protocol_docs.md', label: 'protocol_docs.md', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
+                { id: 'centralized', label: '#decentralized', shape: 'diamond', color: '#9CA3AF' }, // Topic: #9CA3AF
+                { id: 'peer_atlas', label: 'peer_atlas', shape: 'circle', color: '#151515' }, // Peer: #151515
+                { id: 'archive_2024.tar', label: 'archive_2024.tar', shape: 'square', color: '#CCCCCC' }, // File: #CCCCCC
+                { id: 'node_seeker', label: 'node_seeker', shape: 'circle', color: '#151515' }, // Peer: #151515
+                { id: 'network_map.json', label: 'network_map.json', shape: 'square', color: '#CCCCCC' }, // File: #CCCCCC
+                { id: 'mesh_walker', label: 'mesh_walker', shape: 'circle', color: '#151515' }, // Peer: #151515
+                { id: 'protocol_docs.md', label: 'protocol_docs.md', shape: 'square', color: '#CCCCCC' }, // File: #CCCCCC
 
-                // New 10 nodes
-                { id: 'data_stream.log', label: 'data_stream.log', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
-                { id: 'sync_protocol.md', label: 'sync_protocol.md', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
-                { id: 'user_profile_db', label: 'user_profile_db', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
-                { id: 'encrypted_comm', label: 'encrypted_comm', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic
-                { id: 'blockchain_ledger', label: 'blockchain_ledger', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
-                { id: 'discovery_service', label: 'discovery_service', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
-                { id: 'content_hash', label: 'content_hash', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic
-                { id: 'security_audit.pdf', label: 'security_audit.pdf', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
-                { id: 'network_monitor', label: 'network_monitor', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
-                { id: 'token_exchange', label: 'token_exchange', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' } // Topic
+                // Additional 10 nodes (from previous expansion)
+                { id: 'data_stream.log', label: 'data_stream.log', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'sync_protocol.md', label: 'sync_protocol.md', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'user_profile_db', label: 'user_profile_db', shape: 'circle', color: '#151515' }, // Peer
+                { id: 'encrypted_comm', label: 'encrypted_comm', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'blockchain_ledger', label: 'blockchain_ledger', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'discovery_service', label: 'discovery_service', shape: 'circle', color: '#151515' }, // Peer
+                { id: 'content_hash', label: 'content_hash', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'security_audit.pdf', label: 'security_audit.pdf', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'network_monitor', label: 'network_monitor', shape: 'circle', color: '#151515' }, // Peer
+                { id: 'token_exchange', label: 'token_exchange', shape: 'diamond', color: '#9CA3AF' }, // Topic
+
+                // New 10 nodes for this expansion
+                { id: 'metadata_store', label: 'metadata_store', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'query_engine', label: 'query_engine', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'peer_discovery_log', label: 'peer_discovery_log', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'transaction_history', label: 'transaction_history', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'reputation_score', label: 'reputation_score', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'routing_table', label: 'routing_table', shape: 'square', color: '#CCCCCC' }, // File
+                { id: 'network_overlay', label: 'network_overlay', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'content_router', label: 'content_router', shape: 'circle', color: '#151515' }, // Peer
+                { id: 'distributed_ledger_sync', label: 'distributed_ledger_sync', shape: 'diamond', color: '#9CA3AF' }, // Topic
+                { id: 'api_interface_spec', label: 'api_interface_spec', shape: 'square', color: '#CCCCCC' }, // File
+
+                // Missing node (api_gateway) added
+                { id: 'api_gateway', label: 'api_gateway', shape: 'circle', color: '#151515' } // Peer
             ],
             links: [
                 // Original links
@@ -281,7 +276,7 @@
                 { source: 'node_seeker', target: 'network_map.json' },
                 { source: 'mesh_walker', target: 'protocol_docs.md' },
 
-                // New links to connect new nodes and expand the web
+                // Links from previous expansion
                 { source: 'peer_atlas', target: 'data_stream.log' },
                 { source: 'node_seeker', target: 'user_profile_db' },
                 { source: 'mesh_walker', target: 'sync_protocol.md' },
@@ -292,8 +287,24 @@
                 { source: 'blockchain_ledger', target: 'security_audit.pdf' },
                 { source: 'discovery_service', target: 'network_monitor' },
                 { source: 'content_hash', target: 'token_exchange' },
-                { source: 'network_monitor', target: 'data_stream.log' }, // More connections for density
-                { source: 'token_exchange', target: 'user_profile_db' }
+                { source: 'network_monitor', target: 'data_stream.log' },
+                { source: 'token_exchange', target: 'user_profile_db' },
+
+                // New links for this expansion
+                { source: 'network_map.json', target: 'metadata_store' },
+                { source: 'metadata_store', target: 'query_engine' },
+                { source: 'query_engine', target: 'peer_discovery_log' },
+                { source: 'user_profile_db', target: 'transaction_history' },
+                { source: 'blockchain_ledger', target: 'transaction_history' },
+                { source: 'transaction_history', target: 'reputation_score' },
+                { source: 'discovery_service', target: 'routing_table' },
+                { source: 'routing_table', target: 'network_overlay' },
+                { source: 'network_monitor', target: 'content_router' },
+                { source: 'content_router', target: 'data_stream.log' },
+                { source: 'blockchain_ledger', target: 'distributed_ledger_sync' },
+                { source: 'distributed_ledger_sync', target: 'api_interface_spec' },
+                { source: 'api_gateway', target: 'api_interface_spec' },
+                { source: 'token_exchange', target: 'reputation_score' }
             ]
         };
 
@@ -383,7 +394,7 @@
                 .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100)) // Link force with 100px distance
                 .force("charge", d3.forceManyBody().strength(-300)) // Repulsion force between nodes
                 .force("center", d3.forceCenter(width / 2, height / 2)) // Force to center the graph
-                .alphaDecay(0.01); // Smaller decay for smoother movement
+                .alphaDecay(0.0228); // D3's default alphaDecay for smoother movement
 
             // Add links (edges) to SVG
             const link = g.append("g")
