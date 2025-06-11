@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXPLORAR_REDE_P2P.SYS</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              // Monospaced fonts for titles and technical elements
+              mono: ['"SF Mono"', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace'],
+              // Sans-serif font for functional text
+              sans: ['"Inter"', 'Arial', 'sans-serif'],
+            },
+            colors: {
+              // Grayscale and high-contrast color palette
+              'black-pure': '#000000',
+              'white-pure': '#FFFFFF',
+              'gray-darkest': '#1A1A1A', // Used for deep backgrounds (graph, modal)
+              'gray-dark': '#333333',   // Used for interface elements and text on light background
+              'gray-medium': '#666666', // Used for borders and lines
+              'gray-light': '#CCCCCC', // Used for secondary text
+              'gray-lighter': '#E0E0E0', // Used for lighter backgrounds
+
+              // Requested colors for connections and nodes
+              'connection-gray': '#959595', // Color for connections
+              'peer-node-dark': '#151515', // Color for 'peer' nodes
+              'topic-node-light': '#9CA3AF', // Color for 'topic' nodes
+            },
+          },
+        },
+      };
+    </script>
+    <!-- D3.js CDN for graph visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Global and body styles for retro aesthetic */
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevents scrollbars */
+            background-color: var(--tw-colors-black-pure); /* Pure black background for contrast */
+            color: var(--tw-colors-white-pure); /* Pure white text */
+            font-family: 'Inter', sans-serif; /* Sans-serif font for body */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Main title with monospaced font and high contrast */
+        h1 {
+            font-family: 'SF Mono', monospace;
+            font-size: 2.5rem; /* text-4xl */
+            line-height: 1;
+            margin-bottom: 2rem; /* mb-8 */
+            text-align: center;
+            color: var(--tw-colors-white-pure); /* White color for dark background */
+            text-transform: uppercase; /* For a more technical look */
+            letter-spacing: 0.1em; /* Letter spacing */
+        }
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 3rem; /* md:text-5xl */
+            }
+        }
+
+        /* Graph container with solid border and dark background */
+        #graph-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 960px; /* max-w-4xl */
+            height: 70vh;
+            background-color: var(--tw-colors-gray-darkest); /* Darker background for the graph */
+            border: 2px solid var(--tw-colors-white-pure); /* High-contrast white border */
+            border-radius: 0; /* No rounded corners */
+            box-shadow: none; /* No shadow */
+            overflow: hidden;
+        }
+
+        /* Graph SVG */
+        .graph-container {
+            width: 100%;
+            height: 100%;
+            display: block; /* Ensures SVG takes full space */
+            background-color: transparent; /* Transparent background */
+        }
+
+        /* Style for links (edges) */
+        .link {
+            stroke: #D3D3D3; /* Connection color: #959595 */
+            stroke-width: 1px;
+            pointer-events: none;
+        }
+
+        /* Style for nodes */
+        .node {
+            cursor: pointer;
+        }
+
+        /* Style for node text (labels) */
+        .node text {
+            font-size: 8px; /* Font size */
+            fill: var(--tw-colors-white-pure); /* Pure white text for contrast on graph background */
+            text-anchor: middle;
+            dominant-baseline: hanging;
+            user-select: none;
+            font-family: 'SF Mono', monospace; /* Monospaced font for labels */
+        }
+
+        /* Styles for the legend */
+        .legend {
+            font-family: 'SF Mono', monospace;
+            font-size: 0.7rem;
+            fill: var(--tw-colors-white-pure); /* White legend text for dark background */
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-shape {
+            stroke: var(--tw-colors-white-pure); /* White legend shape border */
+            stroke-width: 1px;
+        }
+        .legend-text {
+            fill: var(--tw-colors-white-pure); /* White legend text */
+            margin-left: 5px;
+        }
+
+        /* Button styles (removed as per request) */
+        /* Footer styles (removed as per request) */
+
+        /* Modal styles - Revised for new aesthetic */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85); /* Darker semi-transparent background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--tw-colors-gray-darkest); /* Darker modal background */
+            padding: 1.5rem; /* 24px */
+            border-radius: 0; /* No rounded corners */
+            box-shadow: none; /* No shadow */
+            border: 2px solid var(--tw-colors-white-pure); /* High-contrast white border */
+            width: 90%;
+            max-width: 600px;
+            color: var(--tw-colors-white-pure);
+            position: relative;
+            font-family: 'Inter', sans-serif; /* Functional text in modal */
+        }
+
+        /* Modal close button with high contrast */
+        .modal-close-button {
+            position: absolute;
+            top: 0.75rem; /* 12px */
+            right: 0.75rem; /* 12px */
+            background-color: var(--tw-colors-white-pure); /* White background */
+            color: var(--tw-colors-black-pure); /* Black text for high contrast */
+            border: 1px solid var(--tw-colors-black-pure); /* Thin black border */
+            padding: 0 0.5rem; /* Adjust padding for 'X' */
+            font-size: 1.25rem; /* 'X' font size */
+            cursor: pointer;
+            line-height: 1;
+            font-family: 'SF Mono', monospace; /* Technical style for 'X' */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 1.5rem; /* Fixed button height */
+            width: 1.5rem;  /* Fixed button width */
+        }
+        .modal-close-button:hover {
+            background-color: var(--tw-colors-gray-lighter); /* Slight color change on hover */
+            color: var(--tw-colors-black-pure);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.5rem; /* 8px */
+            margin-top: 1rem; /* 16px */
+            margin-bottom: 1rem; /* 16px */
+            border-radius: 0; /* No rounded corners */
+            border: 1px solid var(--tw-colors-gray-medium); /* Medium gray border */
+            background-color: var(--tw-colors-black-pure); /* Pure black input background */
+            color: var(--tw-colors-white-pure);
+            outline: none;
+            font-family: 'SF Mono', monospace; /* Monospaced font for input */
+        }
+
+        .modal-button {
+            background-color: var(--tw-colors-white-pure); /* White modal button */
+            color: var(--tw-colors-black-pure); /* Black text */
+            padding: 0.625rem 1.25rem; /* 10px 20px */
+            border-radius: 0;
+            border: 2px solid var(--tw-colors-white-pure); /* White border */
+            cursor: pointer;
+            transition: background-color 0.1s ease, color 0.1s ease;
+            font-family: 'SF Mono', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .modal-button:hover {
+            background-color: var(--tw-colors-gray-dark); /* Invert colors on hover */
+            color: var(--tw-colors-white-pure);
+        }
+
+        .modal-title {
+            font-family: 'SF Mono', monospace; /* Monospaced modal title */
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: bold;
+            margin-bottom: 1rem; /* mb-4 */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-body {
+            font-family: 'Inter', sans-serif; /* Sans-serif body text */
+            color: var(--tw-colors-gray-lighter); /* Lighter gray text for subtle contrast */
+            text-align: justify; /* Justified for a document look */
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="font-mono">P2P.SYS</h1>
+
+    <div id="graph-wrapper" class="relative">
+        <!-- D3.js SVG will be injected here -->
+        <svg id="p2p-graph" class="graph-container"></svg>
+    </div>
+
+    <!-- Modal for LLM responses -->
+    <div id="llm-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal()">X</button>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <div id="modal-body" class="modal-body"></div>
+            <div id="modal-input-area" class="hidden">
+                <input type="text" id="concept-input" class="modal-input" placeholder="DIGITE_CONCEITO_AQUI...">
+                <button class="modal-button" onclick="handleConceptInput()">GERAR EXPLICAÇÃO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to store modal state and app ID (if needed)
+        let currentModalPurpose = ''; // 'node-info' or 'concept-explore'
+
+        // Function to get graph wrapper dimensions
+        function getGraphWrapperDimensions() {
+            const wrapper = document.getElementById('graph-wrapper');
+            return {
+                width: wrapper.clientWidth,
+                height: wrapper.clientHeight
+            };
+        }
+
+        // Graph data, based on Figma image and expanded
+        const graphData = {
+            nodes: [
+                // Original nodes
+                { id: 'centralized', label: '#decentralized', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic: #9CA3AF
+                { id: 'peer_atlas', label: 'peer_atlas', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
+                { id: 'archive_2024.tar', label: 'archive_2024.tar', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
+                { id: 'node_seeker', label: 'node_seeker', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
+                { id: 'network_map.json', label: 'network_map.json', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
+                { id: 'mesh_walker', label: 'mesh_walker', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer: #151515
+                { id: 'protocol_docs.md', label: 'protocol_docs.md', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File: #CCCCCC
+
+                // New 10 nodes
+                { id: 'data_stream.log', label: 'data_stream.log', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
+                { id: 'sync_protocol.md', label: 'sync_protocol.md', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
+                { id: 'user_profile_db', label: 'user_profile_db', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
+                { id: 'encrypted_comm', label: 'encrypted_comm', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic
+                { id: 'blockchain_ledger', label: 'blockchain_ledger', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
+                { id: 'discovery_service', label: 'discovery_service', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
+                { id: 'content_hash', label: 'content_hash', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' }, // Topic
+                { id: 'security_audit.pdf', label: 'security_audit.pdf', shape: 'square', color: 'var(--tw-colors-gray-light)' }, // File
+                { id: 'network_monitor', label: 'network_monitor', shape: 'circle', color: 'var(--tw-colors-peer-node-dark)' }, // Peer
+                { id: 'token_exchange', label: 'token_exchange', shape: 'diamond', color: 'var(--tw-colors-topic-node-light)' } // Topic
+            ],
+            links: [
+                // Original links
+                { source: 'centralized', target: 'peer_atlas' },
+                { source: 'centralized', target: 'mesh_walker' },
+                { source: 'peer_atlas', target: 'archive_2024.tar' },
+                { source: 'archive_2024.tar', target: 'node_seeker' },
+                { source: 'node_seeker', target: 'network_map.json' },
+                { source: 'mesh_walker', target: 'protocol_docs.md' },
+
+                // New links to connect new nodes and expand the web
+                { source: 'peer_atlas', target: 'data_stream.log' },
+                { source: 'node_seeker', target: 'user_profile_db' },
+                { source: 'mesh_walker', target: 'sync_protocol.md' },
+                { source: 'centralized', target: 'encrypted_comm' },
+                { source: 'data_stream.log', target: 'blockchain_ledger' },
+                { source: 'user_profile_db', target: 'discovery_service' },
+                { source: 'encrypted_comm', target: 'content_hash' },
+                { source: 'blockchain_ledger', target: 'security_audit.pdf' },
+                { source: 'discovery_service', target: 'network_monitor' },
+                { source: 'content_hash', target: 'token_exchange' },
+                { source: 'network_monitor', target: 'data_stream.log' }, // More connections for density
+                { source: 'token_exchange', target: 'user_profile_db' }
+            ]
+        };
+
+        // Function to open the modal
+        function openModal(title, bodyContent, purpose) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = bodyContent;
+            document.getElementById('llm-modal').classList.remove('hidden');
+            currentModalPurpose = purpose;
+
+            // Show or hide input area depending on purpose
+            if (purpose === 'concept-explore') {
+                document.getElementById('modal-input-area').classList.remove('hidden');
+            } else {
+                document.getElementById('modal-input-area').classList.add('hidden');
+            }
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            document.getElementById('llm-modal').classList.add('hidden');
+            document.getElementById('concept-input').value = ''; // Clears input on close
+        }
+
+        // Function to call LLM and generate explanation
+        async function generateLLMResponse(prompt, modalTitle) {
+            openModal(modalTitle, 'PROCESSANDO_DADOS... AGUARDE_RETORNO.', currentModalPurpose);
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // API key will be provided by Canvas environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    // Replaces newlines with <br> and adds paragraphs for better formatting
+                    const formattedText = text.split('\n').map(p => `<p>${p}</p>`).join('');
+                    document.getElementById('modal-body').innerHTML = formattedText;
+                } else {
+                    document.getElementById('modal-body').innerText = 'ERRO_DE_PROCESSAMENTO. TENTE_NOVAMENTE.';
+                    console.error('Unexpected response structure:', result);
+                }
+            } catch (error) {
+                document.getElementById('modal-body').innerText = 'ERRO_DE_CONEXAO_API. VERIFICAR_REDE.';
+                console.error('Gemini API Error:', error);
+            }
+        }
+
+        // Handler for modal concept input
+        function handleConceptInput() {
+            const concept = document.getElementById('concept-input').value.trim();
+            if (concept) {
+                const prompt = `Explique o conceito de "${concept}" em um contexto de redes peer-to-peer (P2P). Forneça uma explicação clara e concisa. Use linguagem direta, sem rodeios.`;
+                generateLLMResponse(prompt, `EXPLICAÇÃO_PARA: ${concept}`);
+            } else {
+                document.getElementById('modal-body').innerText = 'ENTRADA_INVALIDA. DIGITE_CONCEITO.';
+            }
+        }
+
+        // Function to draw the web
+        function drawGraph() {
+            const { width, height } = getGraphWrapperDimensions();
+
+            // Select SVG element and set its dimensions
+            const svg = d3.select("#p2p-graph")
+                .attr("width", width)
+                .attr("height", height);
+
+            // Clear existing SVG for redraw
+            svg.selectAll("*").remove();
+
+            // Create a group for the graph to allow zoom and pan
+            const g = svg.append("g");
+
+            // Define D3 force simulation
+            const simulation = d3.forceSimulation(graphData.nodes)
+                .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100)) // Link force with 100px distance
+                .force("charge", d3.forceManyBody().strength(-300)) // Repulsion force between nodes
+                .force("center", d3.forceCenter(width / 2, height / 2)); // Force to center the graph
+
+            // Add links (edges) to SVG
+            const link = g.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(graphData.links)
+                .enter().append("line")
+                .attr("class", "link");
+
+            // Add nodes to SVG
+            const node = g.append("g")
+                .attr("class", "nodes")
+                .selectAll(".node")
+                .data(graphData.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag() // Allows dragging nodes
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            // Draw node shapes
+            node.append("path")
+                .attr("d", d => {
+                    const size = 6; // Base radius/size
+                    switch (d.shape) {
+                        case 'circle': return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`; // Circle
+                        case 'square': return `M${-size},${-size}h${size*2}v${size*2}h${-size*2}Z`; // Square
+                        case 'diamond': return `M0,${-size*1.5}L${size},0L0,${size*1.5}L${-size},0Z`; // Diamond
+                        default: return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`;
+                    }
+                })
+                .attr("fill", d => d.color) // Uses color defined in graphData
+                .attr("stroke", "white") // White border for all nodes (ensures contrast on dark graph background)
+                .attr("stroke-width", 1);
+
+            // Add node text (labels)
+            node.append("text")
+                .text(d => d.label.toUpperCase()) // Uppercase text
+                .attr("x", 0)
+                .attr("y", d => {
+                    const size = 6;
+                    switch (d.shape) {
+                        case 'circle': return size + 5;
+                        case 'square': return size + 5;
+                        case 'diamond': return size*1.5 + 5; // Adjust for diamond
+                        default: return size + 5;
+                    }
+                });
+
+            // Update element positions on each simulation tick
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            // Add zoom and pan functionality
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 8]) // Zoom limits
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Drag functions
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            // Handle node click - Now with Gemini API integration
+            node.on("click", (event, d) => {
+                const prompt = `In a peer-to-peer (P2P) network context, what is "${d.label}"? Provide a brief, concise explanation, using technical and direct language, as if it were part of a system documentation.`;
+                generateLLMResponse(prompt, `INFO_ABOUT: ${d.label.toUpperCase()}`, 'node-info');
+            });
+
+            // --- Legend Addition ---
+            const legendData = [
+                { shape: 'circle', label: 'PEERS', color: 'var(--tw-colors-peer-node-dark)' },
+                { shape: 'square', label: 'FILES', color: 'var(--tw-colors-gray-light)' },
+                { shape: 'diamond', label: 'TOPICS', color: 'var(--tw-colors-topic-node-light)' }
+            ];
+
+            const legendX = width - 900; // Legend X position (top right corner)
+            const legendY = 20; // Legend Y position
+
+            const legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${legendX}, ${legendY})`);
+
+            legend.selectAll(".legend-item")
+                .data(legendData)
+                .enter().append("g")
+                .attr("class", "legend-item")
+                .attr("transform", (d, i) => `translate(0, ${i * 20})`) // Vertical spacing between items
+                .each(function(d) {
+                    const itemGroup = d3.select(this);
+                    const size = 4; // Smaller size for legend icons
+
+                    // Draw legend icon shape
+                    itemGroup.append("path")
+                        .attr("class", "legend-shape")
+                        .attr("d", () => {
+                            switch (d.shape) {
+                                case 'circle': return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`;
+                                case 'square': return `M${-size},${-size}h${size*2}v${size*2}h${-size*2}Z`;
+                                case 'diamond': return `M0,${-size*1.5}L${size},0L0,${size*1.5}L${-size},0Z`;
+                                default: return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`;
+                            }
+                        })
+                        .attr("fill", d.color) // Uses color defined in legendData
+                        .attr("stroke", "white") // White border for legend on dark graph background
+                        .attr("stroke-width", 1);
+
+                    // Add legend text
+                    itemGroup.append("text")
+                        .attr("class", "legend-text")
+                        .attr("x", size * 2 + 5) // Text position next to shape
+                        .attr("y", size / 2) // Vertically center with shape
+                        .text(d.label.toUpperCase());
+                });
+            // --- End of Legend Addition ---
+        }
+
+        // Initialize graph drawing and listeners when DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', function() {
+            drawGraph();
+            // Redraw graph on window resize
+            window.addEventListener('resize', drawGraph);
+
+            // The 'explore-concept-button' and related footer are now removed,
+            // so this event listener and console error check are no longer needed.
+            // Keeping them commented out or removed ensures clean code.
+        });
+    </script>
+</body>
+</html>
