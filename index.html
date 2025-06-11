@@ -500,52 +500,7 @@
                 generateLLMResponse(prompt, `INFO_ABOUT: ${d.label.toUpperCase()}`, 'node-info');
             });
 
-            // --- Legend Addition ---
-            const legendData = [
-                { shape: 'circle', label: 'PEERS', color: 'var(--tw-colors-peer-node-dark)' },
-                { shape: 'square', label: 'FILES', color: 'var(--tw-colors-gray-light)' },
-                { shape: 'diamond', label: 'TOPICS', color: 'var(--tw-colors-topic-node-light)' }
-            ];
-
-            const legendX = width - 900; // Legend X position (top right corner)
-            const legendY = 20; // Legend Y position
-
-            const legend = svg.append("g")
-                .attr("class", "legend")
-                .attr("transform", `translate(${legendX}, ${legendY})`);
-
-            legend.selectAll(".legend-item")
-                .data(legendData)
-                .enter().append("g")
-                .attr("class", "legend-item")
-                .attr("transform", (d, i) => `translate(0, ${i * 20})`) // Vertical spacing between items
-                .each(function(d) {
-                    const itemGroup = d3.select(this);
-                    const size = 4; // Smaller size for legend icons
-
-                    // Draw legend icon shape
-                    itemGroup.append("path")
-                        .attr("class", "legend-shape")
-                        .attr("d", () => {
-                            switch (d.shape) {
-                                case 'circle': return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`;
-                                case 'square': return `M${-size},${-size}h${size*2}v${size*2}h${-size*2}Z`;
-                                case 'diamond': return `M0,${-size*1.5}L${size},0L0,${size*1.5}L${-size},0Z`;
-                                default: return `M${-size},0a${size},${size},0,1,0,${size*2},0a${size},${size},0,1,0,${-size*2},0`;
-                            }
-                        })
-                        .attr("fill", d.color) // Uses color defined in legendData
-                        .attr("stroke", "white") // White border for legend on dark graph background
-                        .attr("stroke-width", 1);
-
-                    // Add legend text
-                    itemGroup.append("text")
-                        .attr("class", "legend-text")
-                        .attr("x", size * 2 + 5) // Text position next to shape
-                        .attr("y", size / 2) // Vertically center with shape
-                        .text(d.label.toUpperCase());
-                });
-            // --- End of Legend Addition ---
+            
         }
 
         // Initialize graph drawing and listeners when DOM is fully loaded.
